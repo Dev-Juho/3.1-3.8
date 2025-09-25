@@ -3,6 +3,8 @@ const morgan = require('morgan');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config();
+const { Person, connectIfNeeded } = require('./models/person');
 
 const app = express();
 app.use(express.json());
@@ -38,95 +40,142 @@ app.get('/', (req, res) => {
   res.send('Phonebook backend is running. Try /api/persons or /info');
 });
 
-app.get('/api/persons', (req, res) => {
-  res.json(persons);
+app.get('/api/persons', async (req, res, next) => {
+  try {
+    await connectIfNeeded();
+    const all = await Person.find({});
+    res.json(all);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Legacy/alias routes without /api prefix for older frontends
-app.get('/persons', (req, res) => {
-  res.json(persons);
+app.get('/persons', async (req, res, next) => {
+  try {
+    await connectIfNeeded();
+    const all = await Person.find({});
+    res.json(all);
+  } catch (err) {
+    next(err);
+  }
 });
 
-app.get('/api/persons/:id', (req, res) => {
-  const { id } = req.params;
-  const person = persons.find(p => p.id === id);
-  if (!person) {
-    return res.status(404).json({ error: 'Person not found' });
+app.get('/api/persons/:id', async (req, res, next) => {
+  try {
+    await connectIfNeeded();
+    const person = await Person.findById(req.params.id);
+    if (!person) return res.status(404).json({ error: 'Person not found' });
+    res.json(person);
+  } catch (err) {
+    next(err);
   }
-  res.json(person);
 });
 
-app.get('/persons/:id', (req, res) => {
-  const { id } = req.params;
-  const person = persons.find(p => p.id === id);
-  if (!person) {
-    return res.status(404).json({ error: 'Person not found' });
+app.get('/persons/:id', async (req, res, next) => {
+  try {
+    await connectIfNeeded();
+    const person = await Person.findById(req.params.id);
+    if (!person) return res.status(404).json({ error: 'Person not found' });
+    res.json(person);
+  } catch (err) {
+    next(err);
   }
-  res.json(person);
 });
 
-app.delete('/api/persons/:id', (req, res) => {
-  const { id } = req.params;
-  const index = persons.findIndex(p => p.id === id);
-  if (index === -1) {
-    return res.status(404).json({ error: 'Person not found' });
+app.put('/api/persons/:id', async (req, res, next) => {
+  try {
+    const { number } = req.body || {};
+    await connectIfNeeded();
+    const updated = await Person.findByIdAndUpdate(
+      req.params.id,
+      { number },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ error: 'Person not found' });
+    res.json(updated);
+  } catch (err) {
+    next(err);
   }
-  persons.splice(index, 1);
-  res.status(204).end();
 });
 
-app.delete('/persons/:id', (req, res) => {
-  const { id } = req.params;
-  const index = persons.findIndex(p => p.id === id);
-  if (index === -1) {
-    return res.status(404).json({ error: 'Person not found' });
+app.put('/persons/:id', async (req, res, next) => {
+  try {
+    const { number } = req.body || {};
+    await connectIfNeeded();
+    const updated = await Person.findByIdAndUpdate(
+      req.params.id,
+      { number },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ error: 'Person not found' });
+    res.json(updated);
+  } catch (err) {
+    next(err);
   }
-  persons.splice(index, 1);
-  res.status(204).end();
 });
 
-app.post('/api/persons', (req, res) => {
-  const { name, number } = req.body || {};
-
-  if (!name || !number) {
-    return res.status(400).json({ error: 'name and number are required' });
+app.delete('/api/persons/:id', async (req, res, next) => {
+  try {
+    await connectIfNeeded();
+    const deleted = await Person.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Person not found' });
+    res.status(204).end();
+  } catch (err) {
+    next(err);
   }
-
-  if (persons.some(p => p.name === name)) {
-    return res.status(400).json({ error: 'name must be unique' });
-  }
-
-  let id;
-  do {
-    id = Math.floor(Math.random() * 1e9).toString();
-  } while (persons.some(p => p.id === id));
-
-  const newPerson = { id, name, number };
-  persons.push(newPerson);
-  res.status(201).json(newPerson);
 });
 
-app.post('/persons', (req, res) => {
-  const { name, number } = req.body || {};
-  if (!name || !number) {
-    return res.status(400).json({ error: 'name and number are required' });
+app.delete('/persons/:id', async (req, res, next) => {
+  try {
+    await connectIfNeeded();
+    const deleted = await Person.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Person not found' });
+    res.status(204).end();
+  } catch (err) {
+    next(err);
   }
-  if (persons.some(p => p.name === name)) {
-    return res.status(400).json({ error: 'name must be unique' });
-  }
-  let id;
-  do {
-    id = Math.floor(Math.random() * 1e9).toString();
-  } while (persons.some(p => p.id === id));
-  const newPerson = { id, name, number };
-  persons.push(newPerson);
-  res.status(201).json(newPerson);
 });
 
-app.get('/info', (req, res) => {
-  const count = persons.length;
-  const now = new Date().toString();
-  res.send(`Phonebook has info for ${count} people<br/><br/>${now}`);
+app.post('/api/persons', async (req, res, next) => {
+  try {
+    const { name, number } = req.body || {};
+    if (!name || !number) {
+      return res.status(400).json({ error: 'name and number are required' });
+    }
+    await connectIfNeeded();
+    const person = new Person({ name, number });
+    const saved = await person.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/persons', async (req, res, next) => {
+  try {
+    const { name, number } = req.body || {};
+    if (!name || !number) {
+      return res.status(400).json({ error: 'name and number are required' });
+    }
+    await connectIfNeeded();
+    const person = new Person({ name, number });
+    const saved = await person.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/info', async (req, res, next) => {
+  try {
+    await connectIfNeeded();
+    const count = await Person.countDocuments({});
+    const now = new Date().toString();
+    res.send(`Phonebook has info for ${count} people<br/><br/>${now}`);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // SPA fallback for non-API routes when frontend build exists
@@ -136,6 +185,30 @@ app.get(/^(?!\/api\/).+/, (req, res, next) => {
     return res.sendFile(indexHtml);
   }
   return next();
+});
+
+// Unknown endpoint handler for API routes
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'unknown endpoint' });
+  }
+  return next();
+});
+
+// Centralized error handler
+// Ensure all async routes use (req, res, next) and call next(err) on failure
+app.use((err, req, res, next) => {
+  console.error(err);
+
+  if (err.name === 'CastError') {
+    return res.status(400).json({ error: 'malformatted id' });
+  }
+
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({ error: err.message });
+  }
+
+  return res.status(500).json({ error: 'internal server error' });
 });
 
 const PORT = process.env.PORT || 3001;
