@@ -1,8 +1,10 @@
 const express = require('express');
 const morgan = require('morgan');
+const cors = require('cors');
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 morgan.token('body', (req) => {
   try {
     if (!req.body || Object.keys(req.body).length === 0) return '';
@@ -54,7 +56,6 @@ app.post('/api/persons', (req, res) => {
     return res.status(400).json({ error: 'name must be unique' });
   }
 
-  // generate random id in a large range and ensure string type for consistency
   let id;
   do {
     id = Math.floor(Math.random() * 1e9).toString();
