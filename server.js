@@ -25,12 +25,7 @@ if (fs.existsSync(distDir)) {
   app.use(express.static(distDir));
 }
 
-const persons = [
-  { id: '1', name: 'Arto Hellas', number: '040-123456' },
-  { id: '2', name: 'Ada Lovelace', number: '39-44-5323523' },
-  { id: '3', name: 'Dan Abramov', number: '12-43-234345' },
-  { id: '4', name: 'Mary Poppendieck', number: '39-23-6423122' },
-];
+// legacy in-memory data removed; all data now comes from MongoDB
 
 app.get('/', (req, res) => {
   const indexHtml = path.join(distDir, 'index.html');
@@ -197,7 +192,7 @@ app.use((req, res, next) => {
 
 // Centralized error handler
 // Ensure all async routes use (req, res, next) and call next(err) on failure
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error(err);
 
   if (err.name === 'CastError') {
@@ -215,5 +210,3 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-

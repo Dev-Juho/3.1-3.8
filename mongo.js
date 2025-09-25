@@ -13,7 +13,7 @@ const number = args[4];
 
 mongoose.set('strictQuery', false);
 
-//URI
+// URI
 const username = process.env.DB_USER || 'yourusername';
 const host = process.env.DB_HOST || 'yourcluster.example.mongodb.net';
 const dbName = process.env.DB_NAME || 'phonebook';
@@ -29,12 +29,12 @@ if (!uri) {
 
 const personSchema = new mongoose.Schema({
   name: String,
-  number: String,
+  number: String
 });
 
 const Person = mongoose.model('Person', personSchema);
 
-async function listAllAndExit() {
+async function listAllAndExit () {
   try {
     await mongoose.connect(uri);
     const persons = await Person.find({});
@@ -48,7 +48,7 @@ async function listAllAndExit() {
   }
 }
 
-async function addOneAndExit(personName, personNumber) {
+async function addOneAndExit (personName, personNumber) {
   try {
     await mongoose.connect(uri);
     const person = new Person({ name: personName, number: personNumber });
@@ -71,5 +71,3 @@ if (!name && !number) {
   console.log('Example: node mongo.js <password> "Ada Lovelace" 39-44-5323523');
   process.exit(1);
 }
-
-

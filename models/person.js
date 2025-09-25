@@ -12,7 +12,7 @@ const personSchema = new mongoose.Schema({
     type: String,
     required: [true, 'name is required'],
     minLength: [3, 'name must be at least 3 characters'],
-    trim: true,
+    trim: true
   },
   number: {
     type: String,
@@ -22,12 +22,12 @@ const personSchema = new mongoose.Schema({
     validate: {
       validator: function (v) {
         if (!v) return false;
-// sql blockkia
+        // sql blockkia
         return /^\d{2,3}-\d+$/.test(v) && v.length >= 8;
       },
       message: 'number must be of form XX-xxxxxxx or XXX-xxxxxxx (min length 8)'
-    },
-  },
+    }
+  }
 });
 
 personSchema.set('toJSON', {
@@ -35,17 +35,15 @@ personSchema.set('toJSON', {
   transform: (doc, ret) => {
     ret.id = ret._id.toString();
     delete ret._id;
-  },
+  }
 });
 
 const Person = mongoose.models.Person || mongoose.model('Person', personSchema);
 
-async function connectIfNeeded() {
+async function connectIfNeeded () {
   if (mongoose.connection.readyState === 1) return; // connected
   if (!uri) throw new Error('Missing MONGODB_URI');
   await mongoose.connect(uri);
 }
 
 module.exports = { Person, connectIfNeeded };
-
-
